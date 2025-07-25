@@ -12,44 +12,39 @@ export interface Term {
 
 export const sampleErObjects: ErObject[] = [
   {
-    id: "1",
-    name: "Customer",
-    description: "Primary entity representing individual or organizational customers with comprehensive profile information including demographics, preferences, and transaction history."
+    id: "678",
+    name: "13F_Filings_QtrEnd",
+    description: "Quarterly filing entity for 13F forms containing institutional investment manager holdings and portfolio disclosures required by SEC regulations."
   },
   {
-    id: "2",
-    name: "Product",
-    description: "Core business entity defining items or services offered, including specifications, pricing, inventory levels, and categorization details."
+    id: "1200",
+    name: "AcqBroker",
+    description: "Acquisition broker entity representing intermediary financial professionals facilitating merger and acquisition transactions between buyers and sellers."
   },
   {
-    id: "3",
-    name: "Order",
-    description: "Transactional entity capturing customer purchase requests with detailed line items, pricing, status tracking, and fulfillment information."
+    id: "1253",
+    name: "AcqTaNum",
+    description: "Acquisition transaction number entity providing unique identification for M&A deals and related financial transactions throughout the acquisition process."
   },
   {
-    id: "4",
-    name: "Invoice",
-    description: "Financial document entity representing billing statements with itemized charges, payment terms, tax calculations, and account reconciliation data."
+    id: "1141",
+    name: "AcqTradeDate",
+    description: "Acquisition trade date entity capturing the specific date when acquisition transactions are executed and ownership transfers occur."
   },
   {
-    id: "5",
-    name: "Supplier",
-    description: "External business partner entity providing goods or services, including contact information, performance metrics, and contract details."
+    id: "897",
+    name: "AcqTranType",
+    description: "Acquisition transaction type entity defining categories and classifications of different merger and acquisition transaction structures and methodologies."
   },
   {
-    id: "6",
-    name: "Employee",
-    description: "Human resource entity containing personnel information, role assignments, performance data, and organizational hierarchy relationships."
+    id: "922",
+    name: "ActiveAmort",
+    description: "Active amortization entity tracking ongoing debt repayment schedules and principal reduction calculations for outstanding financial obligations."
   },
   {
-    id: "7",
-    name: "Warehouse",
-    description: "Physical location entity for inventory storage and distribution, including capacity, location coordinates, and operational characteristics."
-  },
-  {
-    id: "8",
-    name: "Payment",
-    description: "Financial transaction entity recording monetary exchanges with method details, authorization status, and reconciliation information."
+    id: "1225",
+    name: "ActiveDate",
+    description: "Active date entity representing effective dates when financial instruments, contracts, or business relationships become operational and enforceable."
   }
 ];
 
