@@ -56,52 +56,17 @@ export const sampleErObjects: ErObject[] = [
 export const sampleTerms: Term[] = [
   {
     id: "1",
-    name: "Customer Lifetime Value (CLV)",
-    description: "A predictive metric that calculates the total net profit a company can expect to earn from a customer throughout their entire business relationship."
+    name: "360 Survey",
+    description: "An employee feedback program whereby an employee is rated by surveys distributed to his or her co-workers, customers, and managers. HR departments may use this feedback to help develop an individual's skill or they may integrate it into performance management programs."
   },
   {
     id: "2",
-    name: "Data Governance",
-    description: "The overall management framework for ensuring data quality, security, privacy, and compliance across the organization's data assets."
+    name: "401(k) Plan",
+    description: "An employer-sponsored retirement plan that has become an expected benefit and is therefore important in attracting and retaining employees. A 401(k) plan allows employees to defer taxes as they save for retirement by placing before-tax dollars directly into an investment account. Employers also contribute to the plan tax-free, for instance by matching contributions. Some plans enable employees to direct their own investments. These plans can be expensive and complex to manage. It is common for companies to outsource all or part of their plan."
   },
   {
     id: "3",
-    name: "Master Data Management (MDM)",
-    description: "A comprehensive method of defining and managing critical business data to provide a single point of reference for consistent, accurate information."
-  },
-  {
-    id: "4",
-    name: "Data Lineage",
-    description: "The complete journey and transformation path of data from its origin through various processing stages to its final destination and usage."
-  },
-  {
-    id: "5",
-    name: "Business Intelligence (BI)",
-    description: "Technology-driven process for analyzing business data and presenting actionable insights to help executives, managers, and workers make informed decisions."
-  },
-  {
-    id: "6",
-    name: "Extract, Transform, Load (ETL)",
-    description: "Data integration process that extracts data from source systems, transforms it to match target schema requirements, and loads it into destination systems."
-  },
-  {
-    id: "7",
-    name: "Data Quality Metrics",
-    description: "Quantitative measures used to assess data accuracy, completeness, consistency, timeliness, validity, and uniqueness across datasets."
-  },
-  {
-    id: "8",
-    name: "Artificial Intelligence (AI)",
-    description: "Computer systems designed to perform tasks that typically require human intelligence, including learning, reasoning, perception, and decision-making."
-  },
-  {
-    id: "9",
-    name: "Machine Learning (ML)",
-    description: "Subset of artificial intelligence that enables systems to automatically learn and improve performance from experience without being explicitly programmed."
-  },
-  {
-    id: "10",
-    name: "Data Classification",
-    description: "The process of organizing and categorizing data based on sensitivity levels, regulatory requirements, and business value to ensure appropriate protection and handling."
+    name: "Absenteeism Policy",
+    description: "A policy about attendance requirements, scheduled and unscheduled time off, and measures for dealing with workplace absenteeism. Repeated absenteeism can lead to termination."
   }
 ];
