@@ -52,6 +52,13 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				// IDC specific colors
+				idc: {
+					primary: 'hsl(var(--idc-primary))',
+					light: 'hsl(var(--idc-primary-light))',
+					secondary: 'hsl(var(--idc-secondary))',
+					accent: 'hsl(var(--idc-accent))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',
