@@ -1,18 +1,24 @@
 import { useState, useMemo } from "react";
 import SearchBar from "./SearchBar";
 import DataCard from "./DataCard";
-import { sampleTerms } from "@/data/sampleData";
+import CSVUpload from "./CSVUpload";
+import { sampleTerms, Term } from "@/data/sampleData";
 
 const TermsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [terms, setTerms] = useState<Term[]>(sampleTerms);
 
   const filteredTerms = useMemo(() => {
-    return sampleTerms.filter(
+    return terms.filter(
       (term) =>
         term.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         term.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, terms]);
+
+  const handleCSVDataParsed = (csvData: Term[]) => {
+    setTerms(csvData);
+  };
 
   return (
     <div className="space-y-6">
@@ -27,6 +33,11 @@ const TermsTab = () => {
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder="Search terms..."
+        />
+        <CSVUpload
+          onDataParsed={handleCSVDataParsed}
+          expectedColumns={["id", "name", "description"]}
+          type="terms"
         />
       </div>
 

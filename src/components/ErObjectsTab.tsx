@@ -1,18 +1,24 @@
 import { useState, useMemo } from "react";
 import SearchBar from "./SearchBar";
 import DataCard from "./DataCard";
-import { sampleErObjects } from "@/data/sampleData";
+import CSVUpload from "./CSVUpload";
+import { sampleErObjects, ErObject } from "@/data/sampleData";
 
 const ErObjectsTab = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [erObjects, setErObjects] = useState<ErObject[]>(sampleErObjects);
 
   const filteredObjects = useMemo(() => {
-    return sampleErObjects.filter(
+    return erObjects.filter(
       (obj) =>
         obj.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         obj.description.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [searchTerm]);
+  }, [searchTerm, erObjects]);
+
+  const handleCSVDataParsed = (csvData: ErObject[]) => {
+    setErObjects(csvData);
+  };
 
   return (
     <div className="space-y-6">
@@ -27,6 +33,11 @@ const ErObjectsTab = () => {
           value={searchTerm}
           onChange={setSearchTerm}
           placeholder="Search ER objects..."
+        />
+        <CSVUpload
+          onDataParsed={handleCSVDataParsed}
+          expectedColumns={["id", "name", "description"]}
+          type="er-objects"
         />
       </div>
 
