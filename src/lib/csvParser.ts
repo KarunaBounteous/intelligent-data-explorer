@@ -67,9 +67,9 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
     return;
   }
 
-  // Check for expected columns (key, name, definition)
+  // Check for required columns (only key and name are mandatory)
   const headers = Object.keys(data[0]);
-  const requiredColumns = ['key', 'name', 'definition'];
+  const requiredColumns = ['key', 'name'];
   const missingColumns = requiredColumns.filter(col => 
     !headers.some(header => header.toLowerCase().includes(col.toLowerCase()))
   );
@@ -82,13 +82,13 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
   // Find the actual column names (case-insensitive)
   const keyColumn = headers.find(h => h.toLowerCase().includes('key')) || 'key';
   const nameColumn = headers.find(h => h.toLowerCase().includes('name')) || 'name';
-  const definitionColumn = headers.find(h => h.toLowerCase().includes('definition')) || 'definition';
+  const definitionColumn = headers.find(h => h.toLowerCase().includes('definition'));
 
   // Transform data to match expected format (mapping key->id, definition->description)
   const transformedData = data.map((row, index) => ({
     id: row[keyColumn] || `csv-${Date.now()}-${index}`,
     name: row[nameColumn] || "",
-    description: row[definitionColumn] || "",
+    description: definitionColumn ? (row[definitionColumn] || "") : "",
   }));
 
   // Validate that required fields are not empty
