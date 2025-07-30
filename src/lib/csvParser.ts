@@ -23,7 +23,7 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
           return;
         }
         
-        // Look for "terms ends" after the start
+        // Look for "terms ends" or "terms end" after the start
         let endIndex = lines.slice(startIndex + 1).findIndex(line => 
           line.toLowerCase().includes('terms end')
         );
@@ -96,6 +96,7 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
   }
 
   const headers = Object.keys(data[0]);
+  console.log("Found headers:", headers); // Debug log
   
   // For terms, try to intelligently map columns if standard names aren't found
   let keyColumn: string | undefined;
@@ -103,24 +104,25 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
   let definitionColumn: string | undefined;
 
   if (type === "terms") {
-    // For terms, key is optional, try to find name and definition columns
-    // Look for columns that might contain "name" or be first non-empty column for name
-    nameColumn = headers.find(h => h.toLowerCase().includes('name')) || 
-                 headers.find(h => h.toLowerCase().includes('term')) ||
-                 headers[0]; // fallback to first column
+    // Look for exact matches first, then case-insensitive matches
+    keyColumn = headers.find(h => h.trim() === 'Key') || 
+                headers.find(h => h.toLowerCase().trim() === 'key');
     
-    // Look for definition/description column
-    definitionColumn = headers.find(h => h.toLowerCase().includes('definition')) ||
-                      headers.find(h => h.toLowerCase().includes('description')) ||
-                      headers.find(h => h.toLowerCase().includes('meaning')) ||
-                      headers[1]; // fallback to second column if available
+    nameColumn = headers.find(h => h.trim() === 'Name') || 
+                 headers.find(h => h.toLowerCase().trim() === 'name') ||
+                 headers.find(h => h.toLowerCase().includes('name')) || 
+                 headers.find(h => h.toLowerCase().includes('term'));
     
-    // Key column is optional for terms
-    keyColumn = headers.find(h => h.toLowerCase().includes('key'));
+    definitionColumn = headers.find(h => h.trim() === 'Definition') ||
+                      headers.find(h => h.toLowerCase().trim() === 'definition') ||
+                      headers.find(h => h.toLowerCase().includes('definition')) ||
+                      headers.find(h => h.toLowerCase().includes('description'));
+    
+    console.log("Mapped columns - Key:", keyColumn, "Name:", nameColumn, "Definition:", definitionColumn); // Debug log
     
     // Validate that we have at least a name column
-    if (!nameColumn || !data.some(row => row[nameColumn]?.trim())) {
-      reject(new Error(`Could not find a valid name/term column. Found columns: ${headers.join(", ")}`));
+    if (!nameColumn) {
+      reject(new Error(`Could not find a valid name/term column. Available columns: ${headers.join(", ")}`));
       return;
     }
   } else {
@@ -139,16 +141,22 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
   }
 
   // Transform data to match expected format
-  const transformedData = data.map((row, index) => ({
-    id: (keyColumn && row[keyColumn]) || `csv-${Date.now()}-${index}`,
-    name: row[nameColumn!] || "",
-    description: (definitionColumn && row[definitionColumn]) || "",
-  }));
+  const transformedData = data
+    .filter(row => {
+      // Filter out rows that don't have a name
+      const nameValue = nameColumn ? row[nameColumn]?.trim() : '';
+      return nameValue && nameValue.length > 0;
+    })
+    .map((row, index) => ({
+      id: (keyColumn && row[keyColumn]?.trim()) || `csv-${Date.now()}-${index}`,
+      name: (nameColumn ? row[nameColumn]?.trim() : '') || "",
+      description: (definitionColumn && row[definitionColumn]?.trim()) || "",
+    }));
 
-  // Validate that required fields are not empty
-  const invalidRows = transformedData.filter(row => !row.name.trim());
-  if (invalidRows.length > 0) {
-    reject(new Error("Some rows have empty name fields"));
+  console.log("Transformed data sample:", transformedData.slice(0, 3)); // Debug log
+
+  if (transformedData.length === 0) {
+    reject(new Error("No valid data rows found in the CSV file"));
     return;
   }
 
