@@ -13,18 +13,30 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
         const text = e.target?.result as string;
         const lines = text.split('\n');
         
-        // Find the "Terms begin" line
-        const termsBeginIndex = lines.findIndex(line => 
+        // First look for "glossary begins" or "terms begin"
+        let startIndex = lines.findIndex(line => 
+          line.toLowerCase().includes('glossary begins') ||
           line.toLowerCase().includes('terms begin')
         );
         
-        if (termsBeginIndex === -1) {
-          reject(new Error("Could not find 'Terms begin' section in the CSV file"));
+        // If we found "glossary begins", look for "terms begin" after it
+        if (startIndex !== -1 && lines[startIndex].toLowerCase().includes('glossary begins')) {
+          const termsBeginIndex = lines.slice(startIndex + 1).findIndex(line => 
+            line.toLowerCase().includes('terms begin')
+          );
+          
+          if (termsBeginIndex !== -1) {
+            startIndex = startIndex + 1 + termsBeginIndex;
+          }
+        }
+        
+        if (startIndex === -1) {
+          reject(new Error("Could not find 'Terms begin' or 'Glossary begins' section in the CSV file"));
           return;
         }
         
-        // Get lines after "Terms begin"
-        const termsSection = lines.slice(termsBeginIndex + 1).join('\n');
+        // Get lines after the found section
+        const termsSection = lines.slice(startIndex + 1).join('\n');
         
         Papa.parse(termsSection, {
           header: true,
