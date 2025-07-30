@@ -51,17 +51,33 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
       };
       reader.readAsText(file);
     } else {
-      // For ER objects CSV, parse normally
-      Papa.parse(file, {
-        header: true,
-        skipEmptyLines: true,
-        complete: (results) => {
-          handleParsedResults(results, resolve, reject);
-        },
-        error: (error) => {
-          reject(new Error(`Failed to read CSV file: ${error.message}`));
-        }
-      });
+      // For ER objects CSV, parse normally but handle relationkey section
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const lines = text.split('\n');
+        
+        // Find the "relationkey" line and only process rows before it
+        const relationKeyIndex = lines.findIndex(line => 
+          line.toLowerCase().includes('relationkey')
+        );
+        
+        const csvContent = relationKeyIndex !== -1 
+          ? lines.slice(0, relationKeyIndex).join('\n')
+          : text;
+        
+        Papa.parse(csvContent, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            handleParsedResults(results, resolve, reject);
+          },
+          error: (error) => {
+            reject(new Error(`Failed to read CSV file: ${error.message}`));
+          }
+        });
+      };
+      reader.readAsText(file);
     }
   });
 };
