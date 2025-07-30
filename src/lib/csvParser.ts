@@ -13,36 +13,36 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
         const text = e.target?.result as string;
         const lines = text.split('\n');
         
-        // First look for "glossary begins" or "terms begin"
+        // Look for "terms begins" or "terms begin"
         let startIndex = lines.findIndex(line => 
-          line.toLowerCase().includes('glossary begins') ||
           line.toLowerCase().includes('terms begin')
         );
         
-        // If we found "glossary begins", look for "terms begin" after it
-        if (startIndex !== -1 && lines[startIndex].toLowerCase().includes('glossary begins')) {
-          const termsBeginIndex = lines.slice(startIndex + 1).findIndex(line => 
-            line.toLowerCase().includes('terms begin')
-          );
-          
-          if (termsBeginIndex !== -1) {
-            startIndex = startIndex + 1 + termsBeginIndex;
-          }
-        }
-        
         if (startIndex === -1) {
-          reject(new Error("Could not find 'Terms begin' or 'Glossary begins' section in the CSV file"));
+          reject(new Error("Could not find 'Terms begin' section in the CSV file"));
           return;
         }
         
-        // Get lines after the found section
-        const termsSection = lines.slice(startIndex + 1).join('\n');
+        // Look for "terms ends" after the start
+        let endIndex = lines.slice(startIndex + 1).findIndex(line => 
+          line.toLowerCase().includes('terms end')
+        );
+        
+        if (endIndex !== -1) {
+          endIndex = startIndex + 1 + endIndex;
+        } else {
+          // If no "terms ends" found, use all lines after "terms begins"
+          endIndex = lines.length;
+        }
+        
+        // Get lines between the found sections
+        const termsSection = lines.slice(startIndex + 1, endIndex).join('\n');
         
         Papa.parse(termsSection, {
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            handleParsedResults(results, resolve, reject);
+            handleParsedResults(results, resolve, reject, type);
           },
           error: (error) => {
             reject(new Error(`Failed to read CSV file: ${error.message}`));
@@ -70,7 +70,7 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
           header: true,
           skipEmptyLines: true,
           complete: (results) => {
-            handleParsedResults(results, resolve, reject);
+            handleParsedResults(results, resolve, reject, type);
           },
           error: (error) => {
             reject(new Error(`Failed to read CSV file: ${error.message}`));
@@ -82,7 +82,7 @@ export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-ob
   });
 };
 
-const handleParsedResults = (results: any, resolve: (value: any[]) => void, reject: (reason?: any) => void) => {
+const handleParsedResults = (results: any, resolve: (value: any[]) => void, reject: (reason?: any) => void, type?: "er-objects" | "terms") => {
   if (results.errors.length > 0) {
     reject(new Error(`CSV parsing error: ${results.errors[0].message}`));
     return;
@@ -95,28 +95,54 @@ const handleParsedResults = (results: any, resolve: (value: any[]) => void, reje
     return;
   }
 
-  // Check for required columns (only key and name are mandatory)
   const headers = Object.keys(data[0]);
-  const requiredColumns = ['key', 'name'];
-  const missingColumns = requiredColumns.filter(col => 
-    !headers.some(header => header.toLowerCase().includes(col.toLowerCase()))
-  );
   
-  if (missingColumns.length > 0) {
-    reject(new Error(`Missing required columns: ${missingColumns.join(", ")}. Found columns: ${headers.join(", ")}`));
-    return;
+  // For terms, try to intelligently map columns if standard names aren't found
+  let keyColumn: string | undefined;
+  let nameColumn: string | undefined;
+  let definitionColumn: string | undefined;
+
+  if (type === "terms") {
+    // For terms, key is optional, try to find name and definition columns
+    // Look for columns that might contain "name" or be first non-empty column for name
+    nameColumn = headers.find(h => h.toLowerCase().includes('name')) || 
+                 headers.find(h => h.toLowerCase().includes('term')) ||
+                 headers[0]; // fallback to first column
+    
+    // Look for definition/description column
+    definitionColumn = headers.find(h => h.toLowerCase().includes('definition')) ||
+                      headers.find(h => h.toLowerCase().includes('description')) ||
+                      headers.find(h => h.toLowerCase().includes('meaning')) ||
+                      headers[1]; // fallback to second column if available
+    
+    // Key column is optional for terms
+    keyColumn = headers.find(h => h.toLowerCase().includes('key'));
+    
+    // Validate that we have at least a name column
+    if (!nameColumn || !data.some(row => row[nameColumn]?.trim())) {
+      reject(new Error(`Could not find a valid name/term column. Found columns: ${headers.join(", ")}`));
+      return;
+    }
+  } else {
+    // For ER objects, both key and name are required
+    keyColumn = headers.find(h => h.toLowerCase().includes('key'));
+    nameColumn = headers.find(h => h.toLowerCase().includes('name'));
+    definitionColumn = headers.find(h => h.toLowerCase().includes('definition'));
+    
+    if (!keyColumn || !nameColumn) {
+      const missing = [];
+      if (!keyColumn) missing.push('key');
+      if (!nameColumn) missing.push('name');
+      reject(new Error(`Missing required columns: ${missing.join(", ")}. Found columns: ${headers.join(", ")}`));
+      return;
+    }
   }
 
-  // Find the actual column names (case-insensitive)
-  const keyColumn = headers.find(h => h.toLowerCase().includes('key')) || 'key';
-  const nameColumn = headers.find(h => h.toLowerCase().includes('name')) || 'name';
-  const definitionColumn = headers.find(h => h.toLowerCase().includes('definition'));
-
-  // Transform data to match expected format (mapping key->id, definition->description)
+  // Transform data to match expected format
   const transformedData = data.map((row, index) => ({
-    id: row[keyColumn] || `csv-${Date.now()}-${index}`,
-    name: row[nameColumn] || "",
-    description: definitionColumn ? (row[definitionColumn] || "") : "",
+    id: (keyColumn && row[keyColumn]) || `csv-${Date.now()}-${index}`,
+    name: row[nameColumn!] || "",
+    description: (definitionColumn && row[definitionColumn]) || "",
   }));
 
   // Validate that required fields are not empty
