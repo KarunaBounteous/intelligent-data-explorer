@@ -4,52 +4,99 @@ export interface ParsedRow {
   [key: string]: string;
 }
 
-export const parseCSVFile = (file: File, expectedColumns: string[]): Promise<any[]> => {
+export const parseCSVFile = (file: File, expectedColumns: string[], type: "er-objects" | "terms"): Promise<any[]> => {
   return new Promise((resolve, reject) => {
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: (results) => {
-        if (results.errors.length > 0) {
-          reject(new Error(`CSV parsing error: ${results.errors[0].message}`));
-          return;
-        }
-
-        const data = results.data as ParsedRow[];
+    if (type === "terms") {
+      // For terms CSV, we need to handle the special "Terms begin" structure
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        const lines = text.split('\n');
         
-        if (data.length === 0) {
-          reject(new Error("CSV file is empty"));
-          return;
-        }
-
-        // Validate headers
-        const headers = Object.keys(data[0]);
-        const missingColumns = expectedColumns.filter(col => !headers.includes(col));
+        // Find the "Terms begin" line
+        const termsBeginIndex = lines.findIndex(line => 
+          line.toLowerCase().includes('terms begin')
+        );
         
-        if (missingColumns.length > 0) {
-          reject(new Error(`Missing required columns: ${missingColumns.join(", ")}`));
+        if (termsBeginIndex === -1) {
+          reject(new Error("Could not find 'Terms begin' section in the CSV file"));
           return;
         }
-
-        // Transform data to match expected format
-        const transformedData = data.map((row, index) => ({
-          id: row.id || `csv-${Date.now()}-${index}`,
-          name: row.name || "",
-          description: row.description || "",
-        }));
-
-        // Validate that required fields are not empty
-        const invalidRows = transformedData.filter(row => !row.name.trim());
-        if (invalidRows.length > 0) {
-          reject(new Error("Some rows have empty name fields"));
-          return;
+        
+        // Get lines after "Terms begin"
+        const termsSection = lines.slice(termsBeginIndex + 1).join('\n');
+        
+        Papa.parse(termsSection, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            handleParsedResults(results, resolve, reject);
+          },
+          error: (error) => {
+            reject(new Error(`Failed to read CSV file: ${error.message}`));
+          }
+        });
+      };
+      reader.readAsText(file);
+    } else {
+      // For ER objects CSV, parse normally
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: (results) => {
+          handleParsedResults(results, resolve, reject);
+        },
+        error: (error) => {
+          reject(new Error(`Failed to read CSV file: ${error.message}`));
         }
-
-        resolve(transformedData);
-      },
-      error: (error) => {
-        reject(new Error(`Failed to read CSV file: ${error.message}`));
-      }
-    });
+      });
+    }
   });
+};
+
+const handleParsedResults = (results: any, resolve: (value: any[]) => void, reject: (reason?: any) => void) => {
+  if (results.errors.length > 0) {
+    reject(new Error(`CSV parsing error: ${results.errors[0].message}`));
+    return;
+  }
+
+  const data = results.data as ParsedRow[];
+  
+  if (data.length === 0) {
+    reject(new Error("CSV file is empty or no data found after parsing"));
+    return;
+  }
+
+  // Check for expected columns (key, name, definition)
+  const headers = Object.keys(data[0]);
+  const requiredColumns = ['key', 'name', 'definition'];
+  const missingColumns = requiredColumns.filter(col => 
+    !headers.some(header => header.toLowerCase().includes(col.toLowerCase()))
+  );
+  
+  if (missingColumns.length > 0) {
+    reject(new Error(`Missing required columns: ${missingColumns.join(", ")}. Found columns: ${headers.join(", ")}`));
+    return;
+  }
+
+  // Find the actual column names (case-insensitive)
+  const keyColumn = headers.find(h => h.toLowerCase().includes('key')) || 'key';
+  const nameColumn = headers.find(h => h.toLowerCase().includes('name')) || 'name';
+  const definitionColumn = headers.find(h => h.toLowerCase().includes('definition')) || 'definition';
+
+  // Transform data to match expected format (mapping key->id, definition->description)
+  const transformedData = data.map((row, index) => ({
+    id: row[keyColumn] || `csv-${Date.now()}-${index}`,
+    name: row[nameColumn] || "",
+    description: row[definitionColumn] || "",
+  }));
+
+  // Validate that required fields are not empty
+  const invalidRows = transformedData.filter(row => !row.name.trim());
+  if (invalidRows.length > 0) {
+    reject(new Error("Some rows have empty name fields"));
+    return;
+  }
+
+  resolve(transformedData);
 };

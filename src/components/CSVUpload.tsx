@@ -30,7 +30,7 @@ const CSVUpload = ({ onDataParsed, expectedColumns, type }: CSVUploadProps) => {
     }
 
     try {
-      const data = await parseCSVFile(file, expectedColumns);
+      const data = await parseCSVFile(file, expectedColumns, type);
       onDataParsed(data);
       toast({
         title: "File uploaded successfully",
