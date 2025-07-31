@@ -1,9 +1,14 @@
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import ErObjectsTab from "@/components/ErObjectsTab";
 import TermsTab from "@/components/TermsTab";
+import { sampleTerms, sampleErObjects, Term, ErObject } from "@/data/sampleData";
 
 const Index = () => {
+  const [terms, setTerms] = useState<Term[]>(sampleTerms);
+  const [erObjects, setErObjects] = useState<ErObject[]>(sampleErObjects);
+
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -20,11 +25,17 @@ const Index = () => {
           </TabsList>
           
           <TabsContent value="er-objects" className="mt-0">
-            <ErObjectsTab />
+            <ErObjectsTab 
+              erObjects={erObjects}
+              onDataParsed={setErObjects}
+            />
           </TabsContent>
           
           <TabsContent value="terms" className="mt-0">
-            <TermsTab />
+            <TermsTab 
+              terms={terms}
+              onDataParsed={setTerms}
+            />
           </TabsContent>
         </Tabs>
       </main>

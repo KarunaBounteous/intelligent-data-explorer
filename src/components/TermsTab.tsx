@@ -2,11 +2,15 @@ import { useState, useMemo } from "react";
 import SearchBar from "./SearchBar";
 import DataCard from "./DataCard";
 import CSVUpload from "./CSVUpload";
-import { sampleTerms, Term } from "@/data/sampleData";
+import { Term } from "@/data/sampleData";
 
-const TermsTab = () => {
+interface TermsTabProps {
+  terms: Term[];
+  onDataParsed: (data: Term[]) => void;
+}
+
+const TermsTab = ({ terms, onDataParsed }: TermsTabProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [terms, setTerms] = useState<Term[]>(sampleTerms);
 
   const filteredTerms = useMemo(() => {
     return terms.filter(
@@ -17,7 +21,7 @@ const TermsTab = () => {
   }, [searchTerm, terms]);
 
   const handleCSVDataParsed = (csvData: Term[]) => {
-    setTerms(csvData);
+    onDataParsed(csvData);
   };
 
   return (

@@ -2,11 +2,15 @@ import { useState, useMemo } from "react";
 import SearchBar from "./SearchBar";
 import DataCard from "./DataCard";
 import CSVUpload from "./CSVUpload";
-import { sampleErObjects, ErObject } from "@/data/sampleData";
+import { ErObject } from "@/data/sampleData";
 
-const ErObjectsTab = () => {
+interface ErObjectsTabProps {
+  erObjects: ErObject[];
+  onDataParsed: (data: ErObject[]) => void;
+}
+
+const ErObjectsTab = ({ erObjects, onDataParsed }: ErObjectsTabProps) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [erObjects, setErObjects] = useState<ErObject[]>(sampleErObjects);
 
   const filteredObjects = useMemo(() => {
     return erObjects.filter(
@@ -17,7 +21,7 @@ const ErObjectsTab = () => {
   }, [searchTerm, erObjects]);
 
   const handleCSVDataParsed = (csvData: ErObject[]) => {
-    setErObjects(csvData);
+    onDataParsed(csvData);
   };
 
   return (
